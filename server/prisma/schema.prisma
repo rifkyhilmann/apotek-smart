@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid()) 
+  name      String
+  email     String  @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Kategori {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  obat  Obat[]
+
+  @@map("kategori") // nama tabel di database
+}
+
+model Satuan {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  obat  Obat[]
+
+  @@map("satuan") // nama tabel di database
+}
+
+model Obat {
+  id           String   @id @default(uuid())
+  kode         String   @unique
+  nama         String
+  harga_beli   Float
+  harga_jual   Float
+  laba         Float
+  stock        Int
+  expired      DateTime @db.Date
+  kategori_id  Int
+  satuan_id    Int
+  suplier      String
+  created_at   DateTime @default(now()) 
+  orderItems   OrderItems[]
+  pembelianItems PembelianItem[]
+
+  // Relasi
+  kategori     Kategori @relation(fields: [kategori_id], references: [id])
+  satuan       Satuan   @relation(fields: [satuan_id], references: [id])
+
+  @@map("obat") // nama tabel di database
+}
+
+model Penjualan {
+  id         String       @id @default(uuid()) 
+  faktur     String       @unique
+  tanggal    DateTime    
+  waktu      DateTime     
+  pembayaran String
+  total      Float
+  total_laba Float
+  items      OrderItems[] // Relasi ke OrderItems
+  createdAt  DateTime     @default(now())
+
+  @@map("penjualan") // nama tabel di database
+}
+
+model OrderItems {
+  id           String   @id @default(uuid()) 
+  faktur_id    String   // foreign key ke Penjualan
+  obat_id      String   // foreign key ke Obat
+  jumlah       Int
+  total_laba   Float
+  total        Float
+
+  faktur       Penjualan @relation(fields: [faktur_id], references: [id]) // Relasi ke Penjualan
+  obat         Obat      @relation(fields: [obat_id], references: [id])    // Relasi ke Obat
+
+  @@map("order_items") // nama tabel di database
+}
+
+model Pembelian {
+  id         String   @id @default(uuid()) 
+  faktur     String   @unique
+  tanggal    DateTime @default(now())
+  suplier    String
+  total      Float
+  items      PembelianItem[] // Relasi ke PembelianItem
+  createdAt  DateTime @default(now())
+
+  @@map("pembelian") // nama tabel di database
+}
+
+model PembelianItem {
+  id          String  @id @default(uuid()) 
+  pembelian_id String // foreign key ke Pembelian
+  obat_id     String  // foreign key ke Obat
+  jumlah      Int
+  total       Float
+
+  pembelian   Pembelian @relation(fields: [pembelian_id], references: [id]) // Relasi ke Pembelian
+  obat        Obat      @relation(fields: [obat_id], references: [id])       // Relasi ke Obat
+
+  @@map("pembelian_item") // nama tabel di database
+}
+
+
+
